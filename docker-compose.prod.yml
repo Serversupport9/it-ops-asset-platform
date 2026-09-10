@@ -1,0 +1,35 @@
+# Production hardening overlay for docker-compose.yml.
+#
+# Use ALONGSIDE the base file, never instead of it:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d \
+#     postgres n8n metabase webapp-api webapp-web
+#
+# It removes every host port publish from the base file so nothing is reachable
+# directly from the host's public interface. On a production host you put a TLS
+# reverse proxy (see caddy/) in front and let it reach the services over the
+# internal Docker network. Only the portal and Metabase should be exposed
+# publicly; keep Postgres, n8n and Adminer private.
+#
+# Adminer is bound to localhost only here, and normally not started in
+# production at all.
+
+services:
+  postgres:
+    ports: !reset []
+
+  n8n:
+    ports: !reset []
+
+  adminer:
+    ports: !reset
+      - "127.0.0.1:8081:8080"
+
+  metabase:
+    ports: !reset []
+
+  webapp-api:
+    ports: !reset []
+
+  webapp-web:
+    ports: !reset []

@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: itops_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: itops_n8n
+    restart: unless-stopped
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+      N8N_HOST: ${N8N_HOST}
+      N8N_PORT: ${N8N_PORT}
+      N8N_PROTOCOL: ${N8N_PROTOCOL}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}
+      # n8n blocks $env access from node expressions by default (n8n's own hardening default) -
+      # needed so the WhatsApp webhook workflow can compare hub.verify_token against the real
+      # secret without hardcoding it into the exported workflow JSON (which is tracked in git).
+      # Not a new trust boundary: the security notes already treats n8n canvas access as equivalent to
+      # full server access (same admin who could read this env var could already read the
+      # Postgres credential stored in n8n directly).
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # Lets a Code node `require('crypto')` - needed so "Portal - WhatsApp Webhook" can compute
+      # the HMAC-SHA256 of the raw inbound body and compare it to Meta's X-Hub-Signature-256
+      # header before acting on APPROVE_/REJECT_ button taps (the security notes WhatsApp webhook item).
+      # Same trust-boundary note as N8N_BLOCK_ENV_ACCESS_IN_NODE above.
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/data/workflows
+      - ./invoices:/data/invoices
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  adminer:
+    image: adminer:latest
+    container_name: itops_adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: itops_metabase
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - metabase_data:/metabase-data
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      MB_DB_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  webapp-api:
+    build:
+      context: ./webapp/backend
+    container_name: itops_webapp_api
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${WEBAPP_JWT_SECRET}
+      DB_ENC_KEY: ${WEBAPP_DB_ENC_KEY}
+      # Public-facing URL, not the Docker-internal service name: the backend never calls
+      # Metabase over HTTP (the embed JWT is signed locally), this is only used to build the
+      # iframe src the browser loads, so it must resolve from the browser, not the container.
+      # Override PUBLIC_METABASE_URL in .env for any host other than this dev machine.
+      METABASE_SITE_URL: ${PUBLIC_METABASE_URL:-http://localhost:3000}
+      METABASE_EMBED_SECRET: ${WEBAPP_METABASE_EMBED_SECRET}
+      # No longer load-bearing for the portal itself - webapp-web's nginx proxies /api/ to this
+      # service same-origin (nginx.conf.template), so the browser never makes a cross-origin
+      # request to reach it. Kept as defense-in-depth for anything else that might call the API
+      # directly from a browser. Override PUBLIC_APP_URL in .env if that ever applies.
+      CORS_ORIGINS: ${PUBLIC_APP_URL:-http://localhost:${WEBAPP_WEB_PORT:-8082}}
+      N8N_WEBHOOK_BASE: http://n8n:5678/webhook
+      # Sent as the X-Webhook-Secret header on the one n8n webhook call FastAPI makes without
+      # the caller already being an authenticated portal user (password-reset request/confirm
+      # emails) - matches the n8n credential "Portal Webhook Shared Secret" (httpHeaderAuth).
+      N8N_WEBHOOK_SHARED_SECRET: ${WEBAPP_N8N_WEBHOOK_SECRET}
+      # Public-facing URL the reset-link email points at (browser-facing, not the Docker-internal
+      # n8n/webapp-api service names) - reuses the same PUBLIC_APP_URL override as CORS_ORIGINS.
+      FRONTEND_BASE_URL: ${PUBLIC_APP_URL:-http://localhost:${WEBAPP_WEB_PORT:-8082}}
+    ports:
+      - "${WEBAPP_API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  webapp-web:
+    build:
+      context: ./webapp/frontend
+    container_name: itops_webapp_web
+    restart: unless-stopped
+    environment:
+      # Docker-internal service name, resolved by nginx at container START (nginx.conf.template
+      # + envsubst), not baked into the build - this is why the same built image works unchanged
+      # across dev/staging/prod, no rebuild needed per environment. Only needs overriding if the
+      # backend service is ever renamed or split into a separate compose stack.
+      API_BACKEND_HOST: webapp-api:8000
+    ports:
+      - "${WEBAPP_WEB_PORT:-8082}:80"
+    depends_on:
+      - webapp-api
+
+volumes:
+  postgres_data:
+  n8n_data:
+  metabase_data:

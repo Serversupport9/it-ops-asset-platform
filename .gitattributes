@@ -1,0 +1,4 @@
+# Shell scripts must keep LF line endings regardless of the checking-out platform's
+# core.autocrlf - a CRLF shebang breaks with "bad interpreter" on Linux (scripts/backup-daily.sh
+# runs on the production server, not this Windows dev machine).
+*.sh text eol=lf

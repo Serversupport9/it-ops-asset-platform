@@ -1,0 +1,116 @@
+{
+  "id": "omg9LWg5UcjSfLk0",
+  "name": "Phase3.5a - Daily IT Summary Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "id": "bf4d4443-59e5-4867-982c-ffba0d37d031",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM v_daily_it_summary;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [208, 0],
+      "id": "2576407a-157f-47a7-bc74-5bdbadfe4e94",
+      "name": "Query Daily Summary",
+      "credentials": {
+        "postgres": {
+          "id": "PFqIGHmn61JbtBF4",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst reportDate = new Date(r.report_date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });\nconst lastSync = r.last_sync_completed_at ? new Date(r.last_sync_completed_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'unknown';\n\nconst text = `📊 IT Ops Daily Summary — ${reportDate}\n\n` +\n  `Assets moved today: ${r.assets_moved_today}\n` +\n  `New requests today: ${r.new_requests_today}\n` +\n  `Pending returns: ${r.pending_returns}\n` +\n  `Overdue returns: ${r.overdue_returns}\n\n` +\n  `Last sheet sync: ${r.last_sync_status} (${lastSync}), ${r.last_sync_rows_failed} rows failed`;\n\nreturn [{ json: { text } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [416, 0],
+      "id": "e24bb7e4-8dae-4e53-a326-9631d46803f8",
+      "name": "Build digest text"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [624, 0],
+      "id": "6b83c75b-5d69-4746-acc3-9b81e6b5b656",
+      "name": "Send daily digest",
+      "credentials": {
+        "telegramApi": {
+          "id": "I3IMGdxsVdR9rINp",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tg = $input.first().json;\nconst messageId = tg.message_id ?? tg.result?.message_id ?? null;\nreturn [{ json: {\n  run_name: 'daily_it_summary_digest',\n  rows_pushed: 1,\n  api_response_status: messageId ? String(messageId) : 'sent',\n  status: 'success'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [832, 0],
+      "id": "f0241950-c9f0-4aa1-814b-eeb06f2061b9",
+      "name": "Prepare report_log row"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO report_log (run_name, rows_pushed, api_response_status, status)\nVALUES ('{{ $json.run_name }}', {{ $json.rows_pushed }}, '{{ $json.api_response_status }}', '{{ $json.status }}');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [1040, 0],
+      "id": "7787763c-42f8-4fbb-af71-e8ea20dc08be",
+      "name": "Log to report_log",
+      "credentials": {
+        "postgres": {
+          "id": "PFqIGHmn61JbtBF4",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Query Daily Summary", "type": "main", "index": 0 }]]
+    },
+    "Query Daily Summary": {
+      "main": [[{ "node": "Build digest text", "type": "main", "index": 0 }]]
+    },
+    "Build digest text": {
+      "main": [[{ "node": "Send daily digest", "type": "main", "index": 0 }]]
+    },
+    "Send daily digest": {
+      "main": [[{ "node": "Prepare report_log row", "type": "main", "index": 0 }]]
+    },
+    "Prepare report_log row": {
+      "main": [[{ "node": "Log to report_log", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

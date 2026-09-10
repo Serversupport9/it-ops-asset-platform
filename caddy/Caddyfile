@@ -1,0 +1,44 @@
+# Example TLS reverse proxy for a production deployment.
+# Replace the domains and the ACME email, then run the Caddy container
+# (see docker-compose.yml in this folder). Caddy fetches and renews
+# Let's Encrypt certificates automatically.
+#
+# Reverse-proxy targets use each container's container_name from the root
+# docker-compose.yml.
+
+{
+	email admin@example.com
+}
+
+# --- Portal ---------------------------------------------------------------
+app.example.com {
+	# Single-path exception: only the WhatsApp inbound webhook reaches n8n.
+	# Every other n8n path stays private (no matching block -> 404 from the
+	# internet). Remove this handle block if you are not using WhatsApp.
+	handle /webhook/whatsapp-inbound* {
+		reverse_proxy itops_n8n:5678
+	}
+
+	handle {
+		reverse_proxy itops_webapp_web:80
+
+		header {
+			Strict-Transport-Security "max-age=31536000; includeSubDomains"
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "SAMEORIGIN"
+			Referrer-Policy "strict-origin-when-cross-origin"
+			Content-Security-Policy "default-src 'self'; connect-src 'self'; frame-src https://metabase.example.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+		}
+	}
+}
+
+# --- Metabase (needs its own hostname; the portal iframe loads it directly) ---
+metabase.example.com {
+	reverse_proxy itops_metabase:3000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

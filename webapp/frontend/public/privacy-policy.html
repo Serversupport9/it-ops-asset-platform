@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Privacy Policy — IT Operations Asset Platform</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #1f2328;
+      --muted: #57606a;
+      --border: #d0d7de;
+      --accent: #0969da;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #9198a1;
+        --border: #30363d;
+        --accent: #4493f8;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
+    header img { height: 32px; width: auto; display: block; margin-bottom: 16px; }
+    h1 { font-size: 1.7rem; margin: 0 0 6px; }
+    h2 { font-size: 1.15rem; margin: 36px 0 10px; }
+    h3 { font-size: 1rem; margin: 22px 0 6px; }
+    p, li { color: var(--fg); }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .note { border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 12px 14px; border-radius: 6px; font-size: 0.94rem; margin: 20px 0; }
+    a { color: var(--accent); }
+    ul { padding-left: 22px; }
+    li { margin: 4px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.94rem; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: color-mix(in srgb, var(--fg) 6%, transparent); }
+    footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="/logo.png" alt="IT Operations Asset Platform" />
+      <h1>Privacy Policy</h1>
+      <p class="muted">IT Operations Asset Platform<br />
+      Last updated: <em>[date]</em></p>
+    </header>
+
+    <div class="note">
+      <strong>Template.</strong> This is a starting point for operators of a self-hosted deployment.
+      Replace every <em>[Your Organization]</em> / <em>[…]</em> placeholder, confirm the service
+      providers and data locations that actually apply to your deployment, and have it reviewed
+      before publishing it to your users.
+    </div>
+
+    <h2>1. About this platform</h2>
+    <p>
+      The IT Operations Asset Platform ("the Platform") is an internal system operated by
+      <strong>[Your Organization]</strong> for managing organization-owned IT assets — laptops,
+      desktops, monitors, phones, printers, networking equipment, software licences and related
+      records — and the requests, approvals, allocations and returns around them.
+    </p>
+    <p>
+      The Platform is intended for use by [Your Organization] employees, contractors and authorised
+      IT and management staff. It is not a consumer product and is not directed at the general
+      public or at children. This policy explains what personal information the Platform processes
+      and why.
+    </p>
+
+    <h2>2. Who is responsible</h2>
+    <p>
+      [Your Organization] is the data controller for information processed by the Platform. For any
+      question about this policy or about your personal information, contact:
+    </p>
+    <p>
+      <strong>IT Operations, [Your Organization]</strong><br />
+      Email: <a href="mailto:it@example.com">it@example.com</a>
+    </p>
+
+    <h2>3. Information we process</h2>
+    <table>
+      <tr><th>Category</th><th>Examples</th></tr>
+      <tr>
+        <td>Employee identity</td>
+        <td>Name, employee ID, work email address, office location, employment status
+        (active / resigned)</td>
+      </tr>
+      <tr>
+        <td>Contact details</td>
+        <td>Work email address; mobile / messaging number for staff who are registered to send or
+        receive asset-workflow notifications</td>
+      </tr>
+      <tr>
+        <td>Asset custody records</td>
+        <td>Which assets are assigned to or held by which person or team, and the history of asset
+        requests, approvals, rejections (including a reason), fulfilments, transfers and returns</td>
+      </tr>
+      <tr>
+        <td>Account &amp; security data</td>
+        <td>Login username (employee ID), a cryptographic hash of your password (never the password
+        itself), password-reset tokens, and an authentication audit log (sign-in events, lockouts,
+        reset requests) with timestamps</td>
+      </tr>
+      <tr>
+        <td>Activity / audit data</td>
+        <td>A record of changes made to operational data through the Platform — what changed, when,
+        and which user, workflow or administrator made the change</td>
+      </tr>
+    </table>
+    <p class="muted">
+      The Platform does not use advertising or analytics cookies. It sets a single session token in
+      your browser after you sign in, solely to keep you logged in.
+    </p>
+
+    <h2>4. How we use this information</h2>
+    <ul>
+      <li>To record and manage custody of organization IT assets across offices.</li>
+      <li>To let employees request assets and view the assets and requests associated with them.</li>
+      <li>To route asset requests to IT and management staff for approval, fulfilment or purchase, and
+      to record the outcome.</li>
+      <li>To send transactional notifications about asset requests, approvals, rejections, fulfilments,
+      losses, write-offs and returns (see section 5).</li>
+      <li>To authenticate users, enforce role-based access, and support account recovery.</li>
+      <li>To maintain an audit trail for accountability, troubleshooting and internal reporting.</li>
+      <li>To produce aggregate operational reports (for example, asset counts by office or device
+      type). These reports are about assets, not about individuals.</li>
+    </ul>
+
+    <h2>5. Messaging notifications</h2>
+    <p>
+      A deployment may be configured to send operational notifications over email and/or a messaging
+      channel (for example the WhatsApp Business Platform or Telegram) related to IT asset workflows.
+      Where a messaging channel is enabled:
+    </p>
+    <ul>
+      <li>Registered approvers and IT staff receive notifications when an asset request needs approval,
+      is approved or rejected, is fulfilled or marked for purchase, or when an asset is returned, lost
+      or written off.</li>
+      <li>Requesting employees may receive a notification when their own request is fulfilled or
+      rejected.</li>
+      <li>An approver can reply to a request notification — using a quick-reply button or a text
+      reply — to approve or reject a request, and to provide a rejection reason. That response and its
+      sender are recorded against the request.</li>
+    </ul>
+    <p>
+      To provide this, the messaging number of each registered staff member is stored by the Platform
+      and shared with the messaging provider only as needed to deliver these messages. Message content
+      is limited to the operational notifications described above. Messages sent through a third-party
+      messaging provider are also subject to that provider's own privacy policy. Staff who do not wish
+      to use a messaging channel for this purpose can ask IT to remove their number; the corresponding
+      notifications will then not be delivered to them.
+    </p>
+
+    <h2>6. Legal basis</h2>
+    <p>
+      We process this information on the basis of [Your Organization]'s legitimate interest in managing
+      and safeguarding its IT assets and operating its internal IT function, and, where applicable, to
+      meet record-keeping and audit obligations. Processing is limited to what is necessary for those
+      purposes.
+    </p>
+
+    <h2>7. Sharing and service providers</h2>
+    <p>We do not sell personal information and do not share it for advertising. Depending on how the
+    deployment is configured, information may be shared only with:</p>
+    <ul>
+      <li><strong>The hosting provider</strong> that the operator uses to run the Platform and its
+      database.</li>
+      <li><strong>A messaging provider</strong> (e.g. Meta Platforms / WhatsApp, or Telegram) — to
+      deliver the messages described in section 5, where enabled.</li>
+      <li><strong>An email provider</strong> — to deliver e-mail notifications such as password-reset
+      messages and internal summary digests.</li>
+      <li>[Your Organization] staff who are authorised to operate the Platform, according to their
+      role.</li>
+    </ul>
+    <p>
+      We may also disclose information where required by law or to protect the rights, property or
+      safety of [Your Organization], its staff or others.
+    </p>
+
+    <h2>8. Data location and transfers</h2>
+    <p>
+      Platform data is stored on infrastructure operated by the hosting provider the operator has
+      chosen, in the region the operator has configured. Notification providers named in section 7
+      may process message and delivery metadata on their own infrastructure, potentially in other
+      countries, in order to deliver those messages.
+    </p>
+
+    <h2>9. Data retention</h2>
+    <p>
+      Employee and asset-custody records are retained for as long as the individual is associated with
+      [Your Organization] and for a further period afterwards as needed for audit, reconciliation and
+      historical reporting. Audit and authentication logs are retained for a reasonable period to
+      support security and accountability. Backups are kept on a rolling schedule and then deleted.
+    </p>
+
+    <h2>10. Security</h2>
+    <p>
+      Access to the Platform requires an individual account and is restricted by role. Traffic to the
+      Platform is encrypted in transit (HTTPS). Passwords are stored only as salted cryptographic
+      hashes. The underlying database and administrative interfaces are not exposed to the public
+      internet and are reachable only through controlled channels. Changes to operational data are
+      recorded in an audit log.
+    </p>
+
+    <h2>11. Your rights</h2>
+    <p>
+      You may ask to see the personal information the Platform holds about you, to have inaccurate
+      information corrected, or to raise a concern about how your information is handled. Contact IT
+      Operations at the address in section 2. Some information — for example audit and custody
+      history — must be retained for record-keeping and cannot be deleted on request.
+    </p>
+
+    <h2>12. Changes to this policy</h2>
+    <p>
+      We may update this policy from time to time. The "last updated" date at the top of this page
+      shows when it last changed. Material changes will be communicated to staff through normal
+      internal channels.
+    </p>
+
+    <footer>
+      <p class="muted">
+        © [year] [Your Organization]. This policy applies to this deployment of the IT Operations
+        Asset Platform and does not replace any broader [Your Organization] employee privacy notice.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

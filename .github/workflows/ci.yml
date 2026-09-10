@@ -1,0 +1,55 @@
+name: CI
+
+# Runs on every pull request to main and every push to main:
+# backend lint (ruff), frontend typecheck/build, and a build-only pass of both
+# Dockerfiles (no push) to catch broken dependencies before merge.
+# There is no automated test suite in this repository yet.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  backend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check webapp/backend/app
+
+  frontend-typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build
+
+  build-only:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            context: ./webapp/backend
+          - name: web
+            context: ./webapp/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

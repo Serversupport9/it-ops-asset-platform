@@ -1,0 +1,18 @@
+.env
+.env-prod
+credentials/
+backups/*
+
+# webapp (Phase 3.5b) local dev artifacts
+webapp/frontend/node_modules/
+webapp/frontend/dist/
+webapp/backend/__pycache__/
+webapp/backend/**/__pycache__/
+webapp/backend/venv/
+
+# Claude Code session scratch (working files, not project content)
+.claude/scratch-archive/
+
+# source spreadsheets for one-off data imports - contain real employee PII (names,
+# personal/phone numbers). The derived seed SQL under db/ is what's tracked.
+raw data/

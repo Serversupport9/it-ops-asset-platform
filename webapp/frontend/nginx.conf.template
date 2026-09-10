@@ -1,0 +1,31 @@
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Proxied unchanged (no trailing slash on proxy_pass) - call sites in src/services/*.ts
+    # already send the full "/api/v1/..." path, matching FastAPI's own route prefix. Resolved
+    # at container-start time via the official nginx image's template + envsubst mechanism
+    # (Dockerfile restricts substitution to API_BACKEND_HOST via NGINX_ENVSUBST_FILTER, so
+    # nginx's own $uri/$host/etc. variables below are left alone, not blanked out).
+    location /api/ {
+        proxy_pass http://${API_BACKEND_HOST};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Clean public URL for the privacy policy (pasted into Meta's "Privacy Policy URL"
+    # field to publish the WhatsApp app). The file ships in the Vite build from
+    # frontend/public/privacy-policy.html. Both /privacy and /privacy/ are handled so a
+    # trailing slash added by a browser or crawler still serves the policy, not the SPA
+    # fallback in `location /` below.
+    location = /privacy  { try_files /privacy-policy.html =404; }
+    location = /privacy/ { try_files /privacy-policy.html =404; }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

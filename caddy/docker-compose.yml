@@ -1,0 +1,37 @@
+# Standalone Caddy reverse proxy for a production deployment.
+#
+# Caddy is the only process that binds 80/443 on the host and routes to the
+# app containers by hostname (see Caddyfile in this folder). It joins the
+# network created by the root docker-compose.yml.
+#
+# Bring the main stack up first (root: docker compose -f docker-compose.yml
+# -f docker-compose.prod.yml up -d ...), then from this folder:
+#
+#   docker compose up -d
+#
+# Check the external network name with `docker network ls` and adjust below
+# if your project directory is not "it-ops-asset-platform".
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: itops_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app
+
+networks:
+  app:
+    name: it-ops-asset-platform_default
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,6 @@
+# B008 (function-call-in-default-argument) flags FastAPI's own idiomatic pattern
+# (Depends(...), Query(...) as parameter defaults) as a false positive - this is how
+# the framework is designed to be used, not a bug. Ruff's own docs note this exception
+# for FastAPI projects.
+[lint]
+ignore = ["B008"]

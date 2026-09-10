@@ -1,0 +1,139 @@
+{
+  "id": "sHWAIoZQsPTKomsq",
+  "name": "Phase3.5a - Weekly IT Summary Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [1],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "id": "63ef74f8-0fa8-4d54-bd35-537bb1f17d82",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT office_name, device_type, asset_count, held_by_person, held_by_team, open_rental_risk_flags, asset_count_prior_week, delta_vs_prior_week FROM v_weekly_it_summary ORDER BY office_name, device_type;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [208, 0],
+      "id": "59fc9762-7922-4d77-90ab-c500227a2cec",
+      "name": "Query Weekly Summary",
+      "credentials": {
+        "postgres": {
+          "id": "PFqIGHmn61JbtBF4",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst byOffice = {};\nfor (const r of rows) {\n  if (!byOffice[r.office_name]) {\n    byOffice[r.office_name] = { asset_count: 0, delta: 0, rental_risk: r.open_rental_risk_flags };\n  }\n  byOffice[r.office_name].asset_count += Number(r.asset_count);\n  byOffice[r.office_name].delta += Number(r.delta_vs_prior_week ?? 0);\n}\nconst totalAssets = rows.reduce((s, r) => s + Number(r.asset_count), 0);\nconst today = new Date();\nconst monday = new Date(today);\nmonday.setDate(today.getDate() - ((today.getDay() + 6) % 7));\nconst weekOfStr = monday.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });\n\nlet text = `📈 IT Ops Weekly Summary — Week of ${weekOfStr}\\n\\n`;\nfor (const [office, d] of Object.entries(byOffice)) {\n  const sign = d.delta > 0 ? '+' : '';\n  text += `${office}: ${d.asset_count} assets (Δ ${sign}${d.delta}), ${d.rental_risk} open rental-risk flags\\n`;\n}\ntext += `\\nTotal: ${totalAssets} assets across ${Object.keys(byOffice).length} offices`;\n\nreturn [{ json: { text, row_count: rows.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [416, 0],
+      "id": "8cae23be-d7c4-4c10-aa20-ec33b2987962",
+      "name": "Build weekly digest text"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [624, 0],
+      "id": "34c0234e-5a01-40af-9886-4bf41be8e227",
+      "name": "Send weekly digest",
+      "credentials": {
+        "telegramApi": {
+          "id": "I3IMGdxsVdR9rINp",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO report_weekly_snapshot (snapshot_date, office_id, device_type_id, asset_count)\nSELECT date_trunc('week', current_date)::date, office_id, device_type_id, count(*)\nFROM assets\nGROUP BY office_id, device_type_id\nON CONFLICT (snapshot_date, office_id, device_type_id)\nDO UPDATE SET asset_count = EXCLUDED.asset_count;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [832, 0],
+      "id": "8d176fe3-762f-4b1c-98ba-24579f0a2ab0",
+      "name": "Snapshot this week's counts",
+      "credentials": {
+        "postgres": {
+          "id": "PFqIGHmn61JbtBF4",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tg = $('Send weekly digest').item.json;\nconst rowCount = $('Build weekly digest text').item.json.row_count;\nconst messageId = tg.message_id ?? tg.result?.message_id ?? null;\nreturn [{ json: {\n  run_name: 'weekly_it_summary_digest',\n  rows_pushed: rowCount,\n  api_response_status: messageId ? String(messageId) : 'sent',\n  status: 'success'\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 0],
+      "id": "2e2b9e30-b644-492c-aa65-3e656d3431e1",
+      "name": "Prepare report_log row"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO report_log (run_name, rows_pushed, api_response_status, status)\nVALUES ('{{ $json.run_name }}', {{ $json.rows_pushed }}, '{{ $json.api_response_status }}', '{{ $json.status }}');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [1248, 0],
+      "id": "3eb6f3cf-907f-4c85-965a-932478e0ebec",
+      "name": "Log to report_log",
+      "credentials": {
+        "postgres": {
+          "id": "PFqIGHmn61JbtBF4",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Query Weekly Summary", "type": "main", "index": 0 }]]
+    },
+    "Query Weekly Summary": {
+      "main": [[{ "node": "Build weekly digest text", "type": "main", "index": 0 }]]
+    },
+    "Build weekly digest text": {
+      "main": [[{ "node": "Send weekly digest", "type": "main", "index": 0 }]]
+    },
+    "Send weekly digest": {
+      "main": [[{ "node": "Snapshot this week's counts", "type": "main", "index": 0 }]]
+    },
+    "Snapshot this week's counts": {
+      "main": [[{ "node": "Prepare report_log row", "type": "main", "index": 0 }]]
+    },
+    "Prepare report_log row": {
+      "main": [[{ "node": "Log to report_log", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
